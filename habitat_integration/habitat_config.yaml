@@ -1,0 +1,69 @@
+habitat:
+  simulator:
+    type: Sim-v0
+    action_space_config: v0
+    forward_step_size: 0.25
+    turn_angle: 30.0
+    scene: data/scene_datasets/habitat-test-scenes/skokloster-castle.glb
+    scene_dataset: data/scene_datasets/habitat-test-scenes/habitat-test-scenes.scene_dataset_config.json
+    agents:
+      main_agent:
+        height: 1.5
+        radius: 0.1
+        sim_sensors:
+          rgb_sensor:
+            type: HabitatSimRGBSensor
+            height: 480
+            width: 640
+            hfov: 90
+            position: [0.0, 0.0, 0.0]
+            orientation: [0.0, 0.0, 0.0]
+          depth_sensor:
+            type: HabitatSimDepthSensor
+            height: 480
+            width: 640
+            hfov: 90
+            min_depth: 0.0
+            max_depth: 10.0
+            normalize_depth: false
+            position: [0.0, 0.0, 0.0]
+            orientation: [0.0, 0.0, 0.0]
+  task:
+    type: Nav-v0
+    lab_sensors:
+      pointgoal_sensor:
+        type: PointGoalSensor
+        goal_format: POLAR
+        dimensionality: 2
+    measurements:
+      distance_to_goal:
+        type: DistanceToGoal
+      success:
+        type: Success
+        success_distance: 0.2
+      spl:
+        type: SPL
+    actions:
+      move_forward:
+        type: MoveForwardAction
+      turn_left:
+        type: TurnLeftAction
+      turn_right:
+        type: TurnRightAction
+      stop:
+        type: StopAction
+    goal_sensor_uuid: pointgoal_sensor
+  environment:
+    max_episode_steps: 500
+    iterator_options:
+      cycle: true
+      shuffle: false
+      group_by_scene: true
+      num_episode_sample: -1
+      max_scene_repeat_episodes: -1
+      max_scene_repeat_steps: 1e4
+      step_repetition_range: 0.2
+  dataset:
+    type: PointNav-v1
+    split: train
+    data_path: data/datasets/pointnav/habitat-test-scenes/v1/{split}/{split}.json.gz
