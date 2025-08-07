@@ -1,0 +1,127 @@
+---
+# Enhanced VLFM Configuration with Rayfronts Integration
+
+# Base VLFM settings
+vlfm:
+  model_path: "data/models/vlfm_model.pth"
+  value_map_size: 480
+  frontier_dilate_occ: 3
+  frontier_min_size: 10
+  # Language model settings
+  clip_model: "ViT-L/14"
+  device: "cuda"
+  
+# Rayfronts 3D mapping integration
+rayfronts:
+  # 3D voxel mapping parameters
+  vox_size: 0.1                    # 10cm voxels
+  max_pts_per_frame: 1000          # Max occupied points per frame
+  max_empty_pts_per_frame: 1000    # Max empty points per frame
+  max_depth_sensing: 8.0           # 8m sensing range
+  
+  # 2D projection parameters
+  height_thresh: [-0.5, 2.0]       # Height bounds for 2D projection (m)
+  map_size_cm: 2400                # 24m x 24m map
+  map_resolution: 5                # 5cm per pixel
+  
+  # Performance parameters
+  vox_accum_period: 1              # Frames to accumulate before voxelization
+  algorithm: "frustum_culling"     # Voxelization algorithm
+  
+# Habitat environment configuration
+habitat:
+  simulator:
+    type: "Sim-v0"
+    action_space_config: "v0"
+    forward_step_size: 0.25
+    turn_angle: 30.0
+    scene_dataset: "data/scene_datasets/hm3d/hm3d_annotated_basis.scene_dataset_config.json"
+    
+    agents:
+      main_agent:
+        height: 1.5
+        radius: 0.1
+        sim_sensors:
+          rgb_sensor:
+            type: "HabitatSimRGBSensor"
+            height: 480
+            width: 640
+            hfov: 90
+            position: [0.0, 0.0, 0.0]
+            orientation: [0.0, 0.0, 0.0]
+          depth_sensor:
+            type: "HabitatSimDepthSensor"
+            height: 480
+            width: 640
+            hfov: 90
+            min_depth: 0.0
+            max_depth: 10.0
+            normalize_depth: false
+            position: [0.0, 0.0, 0.0]
+            orientation: [0.0, 0.0, 0.0]
+            
+  task:
+    type: "ObjectNav-v1"
+    actions:
+      move_forward:
+        type: "MoveForwardAction"
+      turn_left:
+        type: "TurnLeftAction"
+      turn_right:
+        type: "TurnRightAction"
+      stop:
+        type: "StopAction"
+    
+    # Object navigation specific settings
+    object_category_list: ["chair", "table", "sofa", "bed", "toilet", 
+                          "television", "refrigerator", "book", "clock", "vase"]
+    
+  environment:
+    max_episode_steps: 500
+    
+  dataset:
+    type: "ObjectNav-v1"
+    split: "val"
+    data_path: "data/datasets/objectnav/hm3d/v1/{split}/{split}.json.gz"
+
+# Enhanced policy configuration
+enhanced_policy:
+  # Integration weights
+  vlfm_weight: 0.7                 # Weight for original VLFM decisions
+  rayfronts_weight: 0.3            # Weight for 3D occupancy enhancements
+  
+  # Frontier enhancement parameters
+  exploration_bonus_weight: 0.2    # Weight for 3D exploration bonus
+  confidence_threshold: 0.7        # Threshold for using enhanced policy
+  
+  # Path planning
+  use_3d_path_planning: true       # Use 3D occupancy for path planning
+  obstacle_dilation: 2             # Pixels to dilate obstacles
+  
+# Evaluation settings
+evaluation:
+  num_episodes: 100
+  episode_timeout: 500
+  success_distance: 0.2           # Success threshold (meters)
+  
+  # Metrics to compute
+  compute_spl: true
+  compute_success_rate: true
+  compute_path_efficiency: true
+  
+# Logging and output
+logging:
+  level: "INFO"
+  save_maps: true
+  save_trajectories: true
+  visualize_frontiers: false      # Set to true for debugging
+  
+output:
+  results_dir: "results/enhanced_vlfm"
+  checkpoint_interval: 10         # Episodes between checkpoints
+  
+# System settings
+system:
+  device: "cuda"
+  num_workers: 1
+  seed: 42
